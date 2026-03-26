@@ -36,7 +36,7 @@ export async function callGeminiPro<T>(
   userMessage: string
 ): Promise<T> {
   const model = genAI.getGenerativeModel({
-    model: "gemini-3.1-pro-preview",
+    model: "gemini-3-flash-preview",
     generationConfig: {
       responseMimeType: "application/json",
       temperature: 0.7,
@@ -60,7 +60,7 @@ export async function callGeminiProText(
   userMessage: string
 ): Promise<string> {
   const model = genAI.getGenerativeModel({
-    model: "gemini-3.1-pro-preview",
+    model: "gemini-3-flash-preview",
     generationConfig: {
       temperature: 0.7,
     },

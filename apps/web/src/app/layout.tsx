@@ -1,3 +1,5 @@
+import "./globals.css";
+
 export const metadata = {
   title: "ES AutoFill",
   description: "エントリーシート自動入力サービス",
@@ -10,7 +12,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body>{children}</body>
+      <body className="bg-white text-gray-900 antialiased">{children}</body>
     </html>
   );
 }

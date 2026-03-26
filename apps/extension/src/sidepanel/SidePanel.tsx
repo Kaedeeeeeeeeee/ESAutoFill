@@ -1,80 +1,46 @@
-import React, { useState } from "react";
+import React from "react";
 import { createRoot } from "react-dom/client";
-import { ProfileUpload } from "./components/ProfileUpload";
-import { ProfileViewer } from "./components/ProfileViewer";
 import { ChatFill } from "./components/ChatFill";
-import { CompanyList } from "./components/CompanyList";
-import { HistoryView } from "./components/HistoryView";
-import { Settings } from "./components/Settings";
-
-type Tab = "profile" | "fill" | "companies" | "history" | "settings";
 
 function SidePanel() {
-  const [activeTab, setActiveTab] = useState<Tab>("profile");
-
-  const tabs: { id: Tab; label: string }[] = [
-    { id: "profile", label: "プロフィール" },
-    { id: "fill", label: "自動入力" },
-    { id: "companies", label: "企業管理" },
-    { id: "history", label: "履歴" },
-    { id: "settings", label: "設定" },
-  ];
+  const openDashboard = () => {
+    chrome.tabs.create({ url: "http://localhost:3000/dashboard" });
+  };
 
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
       {/* Header */}
       <div
         style={{
-          padding: "12px 16px",
+          padding: "10px 16px",
           borderBottom: "1px solid #e5e7eb",
           background: "#4f46e5",
           color: "white",
-        }}
-      >
-        <h1 style={{ fontSize: "16px", fontWeight: 600 }}>ES AutoFill</h1>
-      </div>
-
-      {/* Tab navigation */}
-      <div
-        style={{
           display: "flex",
-          borderBottom: "1px solid #e5e7eb",
-          background: "white",
+          justifyContent: "space-between",
+          alignItems: "center",
         }}
       >
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            style={{
-              flex: 1,
-              padding: "10px 4px",
-              border: "none",
-              background: activeTab === tab.id ? "#eef2ff" : "transparent",
-              borderBottom: activeTab === tab.id ? "2px solid #4f46e5" : "2px solid transparent",
-              color: activeTab === tab.id ? "#4f46e5" : "#6b7280",
-              cursor: "pointer",
-              fontSize: "12px",
-              fontWeight: activeTab === tab.id ? 600 : 400,
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
+        <h1 style={{ fontSize: "15px", fontWeight: 600 }}>ES AutoFill</h1>
+        <button
+          onClick={openDashboard}
+          style={{
+            padding: "4px 10px",
+            background: "rgba(255,255,255,0.2)",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontSize: "11px",
+          }}
+        >
+          ダッシュボード
+        </button>
       </div>
 
-      {/* Tab content */}
-      <div style={{ flex: 1, overflow: "auto", padding: "16px" }}>
-        {activeTab === "profile" && (
-          <div>
-            <ProfileUpload />
-            <ProfileViewer />
-          </div>
-        )}
-        {activeTab === "fill" && <ChatFill />}
-        {activeTab === "companies" && <CompanyList />}
-        {activeTab === "history" && <HistoryView />}
-        {activeTab === "settings" && <Settings />}
+      {/* Chat fill - the only content */}
+      <div style={{ flex: 1, overflow: "hidden", padding: "0 12px 12px" }}>
+        <ChatFill />
       </div>
     </div>
   );

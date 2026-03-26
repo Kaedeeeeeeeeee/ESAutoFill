@@ -25,8 +25,11 @@ function Popup() {
     setIsLoggedIn(false);
   };
 
-  const handleOpenSidePanel = () => {
-    sendToBackground("OPEN_SIDEPANEL", null);
+  const handleOpenSidePanel = async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab?.id) {
+      await chrome.sidePanel.open({ tabId: tab.id });
+    }
     window.close();
   };
 
