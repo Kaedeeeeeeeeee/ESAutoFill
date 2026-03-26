@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { ProfileUpload } from "./components/ProfileUpload";
 import { ProfileViewer } from "./components/ProfileViewer";
-import { FillPreview } from "./components/FillPreview";
+import { ChatFill } from "./components/ChatFill";
 import { CompanyList } from "./components/CompanyList";
 import { HistoryView } from "./components/HistoryView";
 import { Settings } from "./components/Settings";
@@ -71,7 +71,7 @@ function SidePanel() {
             <ProfileViewer />
           </div>
         )}
-        {activeTab === "fill" && <FillPreview />}
+        {activeTab === "fill" && <ChatFill />}
         {activeTab === "companies" && <CompanyList />}
         {activeTab === "history" && <HistoryView />}
         {activeTab === "settings" && <Settings />}

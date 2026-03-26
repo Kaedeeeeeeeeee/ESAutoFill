@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
     surroundingText: f.surroundingText,
     charLimit: f.charLimit,
     inputType: f.inputType,
+    ...(f.options ? { options: f.options } : {}),
   }));
 
   const result = await callGeminiFlash<ClassifyResponse>(
@@ -34,12 +35,14 @@ export async function POST(request: NextRequest) {
     buildClassifyMessage(fields)
   );
 
-  // Merge selector back from original request
+  // Merge original field data back into classification results
   const classifications = result.classifications.map((c) => {
     const originalField = body.fields.find((f) => f.index === c.index);
     return {
       ...c,
       selector: originalField?.selector ?? "",
+      inputType: originalField?.inputType,
+      options: originalField?.options,
     };
   });
 

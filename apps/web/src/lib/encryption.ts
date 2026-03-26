@@ -10,8 +10,8 @@ function deriveKey(userId: string): Buffer {
   return createHmac("sha256", masterKey).update(userId).digest();
 }
 
-/** Encrypt a string for a specific user. Returns Buffer: [IV (12) | ciphertext | authTag (16)] */
-export function encrypt(plaintext: string, userId: string): Buffer {
+/** Encrypt a string for a specific user. Returns hex string for DB storage. */
+export function encrypt(plaintext: string, userId: string): string {
   const key = deriveKey(userId);
   const iv = randomBytes(IV_LENGTH);
   const cipher = createCipheriv(ALGORITHM, key, iv);
@@ -22,15 +22,19 @@ export function encrypt(plaintext: string, userId: string): Buffer {
   ]);
   const authTag = cipher.getAuthTag();
 
-  return Buffer.concat([iv, encrypted, authTag]);
+  return Buffer.concat([iv, encrypted, authTag]).toString("hex");
 }
 
-/** Decrypt a buffer for a specific user */
-export function decrypt(data: Buffer, userId: string): string {
+/** Decrypt a hex string for a specific user */
+export function decrypt(data: string | Buffer, userId: string): string {
+  const buf = typeof data === "string"
+    ? Buffer.from(data.replace(/^\\x/, ""), "hex")
+    : data;
+
   const key = deriveKey(userId);
-  const iv = data.subarray(0, IV_LENGTH);
-  const authTag = data.subarray(data.length - TAG_LENGTH);
-  const ciphertext = data.subarray(IV_LENGTH, data.length - TAG_LENGTH);
+  const iv = buf.subarray(0, IV_LENGTH);
+  const authTag = buf.subarray(buf.length - TAG_LENGTH);
+  const ciphertext = buf.subarray(IV_LENGTH, buf.length - TAG_LENGTH);
 
   const decipher = createDecipheriv(ALGORITHM, key, iv);
   decipher.setAuthTag(authTag);

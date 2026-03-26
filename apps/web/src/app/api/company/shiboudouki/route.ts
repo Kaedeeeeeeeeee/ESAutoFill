@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     const encField = `${field}_enc`;
     if (profile[encField]) {
       try {
-        decryptedProfile[field] = decrypt(Buffer.from(profile[encField]), user.id);
+        decryptedProfile[field] = decrypt(profile[encField], user.id);
       } catch {
         decryptedProfile[field] = null;
       }

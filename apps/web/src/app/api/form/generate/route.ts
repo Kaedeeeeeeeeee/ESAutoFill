@@ -50,10 +50,7 @@ export async function POST(request: NextRequest) {
     const encField = `${field}_enc`;
     if (profile[encField]) {
       try {
-        decryptedProfile[field] = decrypt(
-          Buffer.from(profile[encField]),
-          user.id
-        );
+        decryptedProfile[field] = decrypt(profile[encField], user.id);
       } catch {
         decryptedProfile[field] = null;
       }
@@ -84,26 +81,38 @@ export async function POST(request: NextRequest) {
   const result = await callGeminiPro<GenerateResponse>(
     CONTENT_GENERATOR_SYSTEM,
     buildGenerateMessage(
-      fieldsToFill.map((f) => ({
-        index: f.index,
-        category: f.category,
-        charLimit: f.charLimit,
-      })),
+      fieldsToFill.map((f) => {
+        const fc = f as unknown as Record<string, unknown>;
+        return {
+          index: f.index,
+          category: f.category,
+          charLimit: f.charLimit ?? fc.char_limit as number | null,
+          inputType: fc.inputType as string | undefined,
+          options: fc.options as Array<{ value: string; text: string }> | undefined,
+        };
+      }),
       decryptedProfile,
       experiences ?? [],
       company
     )
   );
 
-  // Attach selectors back
+  // Attach selectors back + enforce char limits as safety net
   const fills = result.fills.map((fill) => {
     const classification = body.classifications.find(
       (c) => c.index === fill.index
     );
+    // Truncate if AI exceeded the limit
+    let content = fill.content;
+    const charLimit = classification?.charLimit ?? (classification as unknown as Record<string, unknown>)?.char_limit as number | undefined;
+    if (charLimit && [...content].length > charLimit) {
+      content = [...content].slice(0, charLimit).join("");
+    }
     return {
       ...fill,
+      content,
       selector: classification?.selector ?? "",
-      charCount: [...fill.content].length,
+      charCount: [...content].length,
       source: "generated" as const,
     };
   });

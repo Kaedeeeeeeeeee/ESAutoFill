@@ -44,6 +44,7 @@ export function buildClassifyMessage(
     surroundingText: string;
     charLimit: number | null;
     inputType: string;
+    options?: Array<{ value: string; text: string }>;
   }>
 ): string {
   return JSON.stringify({ fields }, null, 2);

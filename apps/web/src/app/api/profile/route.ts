@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       const encField = `${field}_enc`;
       if (profile[encField]) {
         try {
-          profile[field] = decrypt(Buffer.from(profile[encField]), user.id);
+          profile[field] = decrypt(profile[encField], user.id);
         } catch {
           profile[field] = null;
         }

@@ -14,6 +14,8 @@ export interface FieldContext {
   inputType: "textarea" | "input" | "contenteditable" | "select" | "radio" | "checkbox";
   /** Current value if any */
   currentValue: string;
+  /** Available options for select elements */
+  options?: Array<{ value: string; text: string }>;
 }
 
 /** Form snapshot - all fields on a page */

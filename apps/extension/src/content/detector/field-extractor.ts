@@ -11,6 +11,7 @@ export function extractFieldContext(
   const inputType = getInputType(element);
   const selector = generateSelector(element);
   const currentValue = getCurrentValue(element);
+  const options = getSelectOptions(element);
 
   return {
     selector,
@@ -20,6 +21,7 @@ export function extractFieldContext(
     charLimit,
     inputType,
     currentValue,
+    ...(options ? { options } : {}),
   };
 }
 
@@ -191,6 +193,17 @@ function getCurrentValue(el: HTMLElement): string {
     return el.textContent ?? "";
   }
   return "";
+}
+
+/** Extract options from a select element */
+function getSelectOptions(
+  el: HTMLElement
+): Array<{ value: string; text: string }> | undefined {
+  if (!(el instanceof HTMLSelectElement)) return undefined;
+
+  return Array.from(el.options)
+    .filter((opt) => opt.value !== "") // Skip placeholder options
+    .map((opt) => ({ value: opt.value, text: opt.text.trim() }));
 }
 
 /** Get direct text content (not from child elements) */
