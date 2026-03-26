@@ -1,0 +1,25 @@
+{
+  "name": "@es-autofill/extension",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm build",
+    "build": "BUILD_TARGET=popup vite build && BUILD_TARGET=sidepanel vite build && BUILD_TARGET=content vite build && BUILD_TARGET=service-worker vite build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@es-autofill/shared": "workspace:*",
+    "@types/chrome": "^0.0.287",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "typescript": "^5.7.0",
+    "vite": "^6.1.0"
+  }
+}
