@@ -15,6 +15,10 @@ import {
   PROFILE_PARSER_SYSTEM,
   buildParseMessage,
 } from "@/lib/ai/prompts/profile-parser";
+import {
+  CHAT_FILL_BATCH_SYSTEM,
+  buildChatFillBatchMessage,
+} from "@/lib/ai/prompts/chat-fill";
 
 describe("Field classifier prompt", () => {
   it("system prompt contains all categories", () => {
@@ -102,5 +106,39 @@ describe("Profile parser prompt", () => {
   it("builds message with raw text", () => {
     const msg = buildParseMessage("履歴書の内容テスト");
     expect(msg).toContain("履歴書の内容テスト");
+  });
+});
+
+describe("Chat fill batch prompt", () => {
+  it("system prompt specifies JSON output format", () => {
+    expect(CHAT_FILL_BATCH_SYSTEM).toContain("fills");
+    expect(CHAT_FILL_BATCH_SYSTEM).toContain("fieldIndex");
+  });
+
+  it("builds batch message with multiple fields", () => {
+    const msg = buildChatFillBatchMessage(
+      [
+        { fieldIndex: 0, fieldCategory: "shiboudouki", fieldLabel: "志望動機", charLimit: 400 },
+        { fieldIndex: 1, fieldCategory: "basic_info_gender", fieldLabel: "性別", charLimit: null, options: [{ value: "male", text: "男性" }, { value: "female", text: "女性" }] },
+        { fieldIndex: 2, fieldCategory: "basic_info_birthday_year", fieldLabel: "生年月日（年）", charLimit: null },
+      ],
+      "グローバル展開に興味がある。男性。2000年生まれ。",
+      { university: "東京大学" }
+    );
+
+    expect(msg).toContain("志望動機");
+    expect(msg).toContain("性別");
+    expect(msg).toContain("男性 / 女性");
+    expect(msg).toContain("400字以内");
+    expect(msg).toContain("グローバル展開");
+    expect(msg).toContain("東京大学");
+  });
+});
+
+describe("Field classifier - new categories", () => {
+  it("system prompt includes gender and birthday categories", () => {
+    expect(FIELD_CLASSIFIER_SYSTEM).toContain("basic_info_gender");
+    expect(FIELD_CLASSIFIER_SYSTEM).toContain("basic_info_birthday");
+    expect(FIELD_CLASSIFIER_SYSTEM).toContain("basic_info_address");
   });
 });

@@ -10,6 +10,13 @@ Categories:
 - "basic_info_university": 大学名 / 学校名
 - "basic_info_faculty": 学部 / 学科 / 専攻
 - "basic_info_graduation": 卒業年度 / 卒業予定
+- "basic_info_gender": 性別 / 男性・女性 (radio buttons for gender)
+- "basic_info_birthday": 生年月日 / 誕生日 (date fields: year/month/day selects)
+- "basic_info_birthday_year": 生年月日の年 (year part of birthday)
+- "basic_info_birthday_month": 生年月日の月 (month part of birthday)
+- "basic_info_birthday_day": 生年月日の日 (day part of birthday)
+- "basic_info_address": 住所 / 現住所
+- "basic_info_postal_code": 郵便番号
 - "gakuchika": 学生時代に力を入れたこと / ガクチカ / 学生時代の経験
 - "self_pr": 自己PR / 自己紹介 / あなたの強み / 自分の長所
 - "shiboudouki": 志望動機 / 志望理由 / なぜ当社 / 入社を希望する理由

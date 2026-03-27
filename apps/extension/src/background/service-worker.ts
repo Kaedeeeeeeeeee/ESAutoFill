@@ -46,6 +46,11 @@ async function handleMessage(
     case "OPEN_SIDEPANEL": {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (tab?.id) {
+        await chrome.sidePanel.setOptions({
+          tabId: tab.id,
+          path: "sidepanel.html",
+          enabled: true,
+        });
         await chrome.sidePanel.open({ tabId: tab.id });
       }
       return { success: true };
@@ -376,12 +381,21 @@ function broadcastToExtension(message: Message): void {
   }
 }
 
-// Handle extension icon click
+// Handle extension icon click — open side panel only for this tab
 chrome.action.onClicked.addListener(async (tab) => {
   if (tab.id) {
+    // Enable side panel only for this specific tab
+    await chrome.sidePanel.setOptions({
+      tabId: tab.id,
+      path: "sidepanel.html",
+      enabled: true,
+    });
     await chrome.sidePanel.open({ tabId: tab.id });
   }
 });
+
+// By default, disable side panel for all tabs (only enable per-tab)
+chrome.sidePanel.setOptions({ enabled: false });
 
 // Auto-login with test account on install (DEV ONLY - remove in production)
 chrome.runtime.onInstalled.addListener(async () => {

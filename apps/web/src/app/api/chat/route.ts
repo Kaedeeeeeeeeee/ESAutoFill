@@ -1,16 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/lib/supabase/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { callGeminiProText } from "@/lib/ai/gemini";
+import { callGeminiProText, callGeminiPro } from "@/lib/ai/gemini";
 import { decrypt } from "@/lib/encryption";
-import { CHAT_FILL_SYSTEM, buildChatFillMessage } from "@/lib/ai/prompts/chat-fill";
+import {
+  CHAT_FILL_SYSTEM,
+  CHAT_FILL_BATCH_SYSTEM,
+  buildChatFillMessage,
+  buildChatFillBatchMessage,
+} from "@/lib/ai/prompts/chat-fill";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
-/**
- * POST /api/chat
- * Generate content for a single field based on user's chat response.
- * Used when the AI needs to ask the user a follow-up question.
- */
+async function getDecryptedProfile(userId: string) {
+  const supabase = createAdminClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("user_id", userId)
+    .single();
+
+  if (!profile) return undefined;
+
+  const decrypted: Record<string, unknown> = { ...profile };
+  for (const field of ["full_name", "furigana", "email", "phone"]) {
+    const encField = `${field}_enc`;
+    if (profile[encField]) {
+      try {
+        decrypted[field] = decrypt(profile[encField], userId);
+      } catch {
+        decrypted[field] = null;
+      }
+    }
+    delete decrypted[encField];
+  }
+  return decrypted;
+}
+
 export async function POST(request: NextRequest) {
   const user = await authenticateRequest(request);
   if (!user) {
@@ -23,72 +48,61 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const {
-    fieldCategory,
-    fieldLabel,
-    charLimit,
-    userResponse,
-    companyName,
-  } = body as {
-    fieldCategory: string;
-    fieldLabel: string;
-    charLimit: number | null;
-    userResponse: string;
-    companyName?: string;
-  };
+  const userResponse = body.userResponse as string;
 
   if (!userResponse?.trim()) {
     return NextResponse.json({ error: "No response provided" }, { status: 400 });
   }
 
-  const supabase = createAdminClient();
+  const decryptedProfile = await getDecryptedProfile(user.id);
 
-  // Fetch profile for context
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("user_id", user.id)
-    .single();
+  // Batch mode: multiple fields at once
+  if (body.fields && Array.isArray(body.fields)) {
+    const fields = body.fields as Array<{
+      fieldIndex: number;
+      fieldCategory: string;
+      fieldLabel: string;
+      charLimit: number | null;
+      options?: Array<{ value: string; text: string }>;
+    }>;
 
-  // Decrypt PII
-  let decryptedProfile: Record<string, unknown> | undefined;
-  if (profile) {
-    decryptedProfile = { ...profile };
-    for (const field of ["full_name", "furigana", "email", "phone"]) {
-      const encField = `${field}_enc`;
-      if (profile[encField]) {
-        try {
-          decryptedProfile![field] = decrypt(profile[encField], user.id);
-        } catch {
-          decryptedProfile![field] = null;
-        }
+    const result = await callGeminiPro<{
+      fills: Array<{ fieldIndex: number; content: string; charCount: number }>;
+    }>(
+      CHAT_FILL_BATCH_SYSTEM,
+      buildChatFillBatchMessage(fields, userResponse, decryptedProfile)
+    );
+
+    // Enforce char limits
+    const fills = result.fills.map((fill) => {
+      const field = fields.find((f) => f.fieldIndex === fill.fieldIndex);
+      let content = fill.content;
+      if (field?.charLimit && [...content].length > field.charLimit) {
+        content = [...content].slice(0, field.charLimit).join("");
       }
-      delete decryptedProfile![encField];
-    }
+      return { ...fill, content, charCount: [...content].length };
+    });
+
+    return NextResponse.json({ fills });
   }
 
-  // Generate content
+  // Single field mode (backward compatible)
+  const { fieldCategory, fieldLabel, charLimit, companyName } = body as {
+    fieldCategory: string;
+    fieldLabel: string;
+    charLimit: number | null;
+    companyName?: string;
+  };
+
   let content = await callGeminiProText(
     CHAT_FILL_SYSTEM,
-    buildChatFillMessage(
-      fieldCategory,
-      fieldLabel,
-      charLimit,
-      userResponse,
-      decryptedProfile,
-      companyName
-    )
+    buildChatFillMessage(fieldCategory, fieldLabel, charLimit, userResponse, decryptedProfile, companyName)
   );
 
   content = content.trim();
-
-  // Enforce char limit
   if (charLimit && [...content].length > charLimit) {
     content = [...content].slice(0, charLimit).join("");
   }
 
-  return NextResponse.json({
-    content,
-    charCount: [...content].length,
-  });
+  return NextResponse.json({ content, charCount: [...content].length });
 }

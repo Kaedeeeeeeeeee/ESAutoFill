@@ -5,6 +5,7 @@ export function scanFormFields(): HTMLElement[] {
     'input[type="text"]',
     'input[type="email"]',
     'input[type="tel"]',
+    'input[type="number"]',
     'input:not([type])', // Default type is text
     '[contenteditable="true"]',
     "select",
@@ -12,7 +13,7 @@ export function scanFormFields(): HTMLElement[] {
 
   const elements = document.querySelectorAll<HTMLElement>(selectors.join(", "));
 
-  return Array.from(elements).filter((el) => {
+  const results = Array.from(elements).filter((el) => {
     // Skip hidden elements
     if (el.offsetParent === null && !el.closest('[role="dialog"]')) return false;
 
@@ -29,4 +30,23 @@ export function scanFormFields(): HTMLElement[] {
 
     return true;
   });
+
+  // Also scan for radio button GROUPS (treat each name group as one field)
+  const radioGroups = new Map<string, HTMLInputElement[]>();
+  document.querySelectorAll<HTMLInputElement>('input[type="radio"]').forEach((radio) => {
+    if (radio.offsetParent === null) return; // Skip hidden
+    const groupName = radio.name || radio.id;
+    if (!groupName) return;
+    if (!radioGroups.has(groupName)) radioGroups.set(groupName, []);
+    radioGroups.get(groupName)!.push(radio);
+  });
+
+  // Add the first radio of each group as the representative element
+  for (const [, radios] of radioGroups) {
+    if (radios.length > 0) {
+      results.push(radios[0]);
+    }
+  }
+
+  return results;
 }

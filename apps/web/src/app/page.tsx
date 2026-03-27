@@ -37,17 +37,17 @@ export default function LandingPage() {
       <section className="py-20 px-6 bg-gray-50">
         <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-8">
           <FeatureCard
-            icon="🔍"
+            icon={<SearchIcon />}
             title="フォーム自動検出"
             description="どの企業のESページでも、入力フィールドを自動で検出。氏名、ガクチカ、志望動機などを瞬時に識別します。"
           />
           <FeatureCard
-            icon="✨"
+            icon={<SparklesIcon />}
             title="AI内容生成"
             description="あなたのプロフィールと経験に基づき、文字数制限に合わせた最適なES文章をAIが自動生成します。"
           />
           <FeatureCard
-            icon="⚡"
+            icon={<BoltIcon />}
             title="ワンクリック入力"
             description="生成された内容をプレビューで確認し、ワンクリックでフォームに一括入力。20社分のESも数分で完了。"
           />
@@ -86,10 +86,37 @@ export default function LandingPage() {
   );
 }
 
-function FeatureCard({ icon, title, description }: { icon: string; title: string; description: string }) {
+function SearchIcon() {
+  return (
+    <svg className="w-8 h-8 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      <line x1="8" y1="11" x2="14" y2="11" />
+      <line x1="11" y1="8" x2="11" y2="14" />
+    </svg>
+  );
+}
+
+function SparklesIcon() {
+  return (
+    <svg className="w-8 h-8 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8L12 2z" />
+    </svg>
+  );
+}
+
+function BoltIcon() {
+  return (
+    <svg className="w-8 h-8 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
+  );
+}
+
+function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-      <div className="text-3xl mb-3">{icon}</div>
+      <div className="mb-3">{icon}</div>
       <h3 className="font-bold text-lg mb-2">{title}</h3>
       <p className="text-gray-500 text-sm leading-relaxed">{description}</p>
     </div>

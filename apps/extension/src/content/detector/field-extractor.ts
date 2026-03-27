@@ -195,15 +195,32 @@ function getCurrentValue(el: HTMLElement): string {
   return "";
 }
 
-/** Extract options from a select element */
+/** Extract options from a select element or radio button group */
 function getSelectOptions(
   el: HTMLElement
 ): Array<{ value: string; text: string }> | undefined {
-  if (!(el instanceof HTMLSelectElement)) return undefined;
+  // Select element
+  if (el instanceof HTMLSelectElement) {
+    return Array.from(el.options)
+      .filter((opt) => opt.value !== "")
+      .map((opt) => ({ value: opt.value, text: opt.text.trim() }));
+  }
 
-  return Array.from(el.options)
-    .filter((opt) => opt.value !== "") // Skip placeholder options
-    .map((opt) => ({ value: opt.value, text: opt.text.trim() }));
+  // Radio button group — find all radios with same name
+  if (el instanceof HTMLInputElement && el.type === "radio" && el.name) {
+    const radios = document.querySelectorAll<HTMLInputElement>(
+      `input[type="radio"][name="${CSS.escape(el.name)}"]`
+    );
+    return Array.from(radios).map((r) => {
+      // Get label text for this radio
+      const label = r.labels?.[0]?.textContent?.trim()
+        || r.parentElement?.textContent?.trim()
+        || r.value;
+      return { value: r.value, text: label };
+    });
+  }
+
+  return undefined;
 }
 
 /** Get direct text content (not from child elements) */

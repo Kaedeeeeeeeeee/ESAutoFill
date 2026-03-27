@@ -45,6 +45,13 @@ export type ESFieldCategory =
   | "basic_info_university"
   | "basic_info_faculty"
   | "basic_info_graduation"
+  | "basic_info_gender"
+  | "basic_info_birthday"
+  | "basic_info_birthday_year"
+  | "basic_info_birthday_month"
+  | "basic_info_birthday_day"
+  | "basic_info_address"
+  | "basic_info_postal_code"
   // ES content fields
   | "gakuchika"
   | "self_pr"

@@ -2,6 +2,7 @@ import { fillNativeInput } from "./strategies/native-input";
 import { fillReactInput } from "./strategies/react-input";
 import { fillContentEditable } from "./strategies/contenteditable";
 import { fillSelect } from "./strategies/select-radio";
+import { simulateInputEvents } from "./event-simulator";
 import type { FillInstruction } from "@es-autofill/shared";
 
 /** Execute fill instructions on the page */
@@ -40,6 +41,21 @@ function fillElement(element: HTMLElement, value: string): boolean {
     return fillSelect(element, value);
   }
 
+  // Radio button — find the matching radio in the group and click it
+  if (element instanceof HTMLInputElement && element.type === "radio") {
+    return fillRadioGroup(element, value);
+  }
+
+  // Checkbox
+  if (element instanceof HTMLInputElement && element.type === "checkbox") {
+    const shouldCheck = value === "true" || value === "1" || value === "checked";
+    if (element.checked !== shouldCheck) {
+      element.checked = shouldCheck;
+      simulateInputEvents(element);
+    }
+    return true;
+  }
+
   // ContentEditable
   if (element.contentEditable === "true") {
     return fillContentEditable(element, value);
@@ -53,6 +69,37 @@ function fillElement(element: HTMLElement, value: string): boolean {
 
     // If native didn't stick (React controlled), try React hack
     return fillReactInput(element, value);
+  }
+
+  return false;
+}
+
+/** Fill a radio button group by matching value or label text */
+function fillRadioGroup(representative: HTMLInputElement, value: string): boolean {
+  const name = representative.name;
+  if (!name) return false;
+
+  const radios = document.querySelectorAll<HTMLInputElement>(
+    `input[type="radio"][name="${CSS.escape(name)}"]`
+  );
+
+  for (const radio of radios) {
+    // Match by value
+    if (radio.value === value) {
+      radio.checked = true;
+      simulateInputEvents(radio);
+      return true;
+    }
+
+    // Match by label text
+    const labelText = radio.labels?.[0]?.textContent?.trim()
+      || radio.parentElement?.textContent?.trim()
+      || "";
+    if (labelText === value || labelText.includes(value)) {
+      radio.checked = true;
+      simulateInputEvents(radio);
+      return true;
+    }
   }
 
   return false;

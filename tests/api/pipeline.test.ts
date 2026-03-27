@@ -453,4 +453,106 @@ describe("POST /api/chat", () => {
 
     expect(status).toBe(400);
   });
+
+  it("generates multiple fields in batch mode", { timeout: 120_000 }, async () => {
+    const { status, data } = await apiCall("/api/chat", "POST", {
+      userResponse: "志望動機はグローバル展開に興味がある。性別は男性。2000年5月15日生まれ。",
+      fields: [
+        { fieldIndex: 0, fieldCategory: "shiboudouki", fieldLabel: "志望動機", charLimit: 400 },
+        { fieldIndex: 1, fieldCategory: "basic_info_gender", fieldLabel: "性別", charLimit: null, options: [{ value: "male", text: "男性" }, { value: "female", text: "女性" }] },
+        { fieldIndex: 2, fieldCategory: "basic_info_birthday_year", fieldLabel: "生年月日（年）", charLimit: null },
+      ],
+    });
+
+    expect(status).toBe(200);
+    expect(data.fills).toBeDefined();
+    expect(data.fills.length).toBeGreaterThanOrEqual(2);
+
+    console.log("  → Batch fills:", data.fills.map(
+      (f: { fieldIndex: number; content: string; charCount: number }) =>
+        `[${f.fieldIndex}] ${f.content.slice(0, 30)}... (${f.charCount}字)`
+    ));
+
+    // 志望動機 should have content
+    const shiboudouki = data.fills.find((f: { fieldIndex: number }) => f.fieldIndex === 0);
+    if (shiboudouki) {
+      expect(shiboudouki.content.length).toBeGreaterThan(0);
+      expect(shiboudouki.charCount).toBeLessThanOrEqual(400);
+    }
+
+    // Gender should be picked
+    const gender = data.fills.find((f: { fieldIndex: number }) => f.fieldIndex === 1);
+    if (gender) {
+      expect(gender.content).toBeTruthy();
+    }
+  });
+});
+
+describe("Radio/Gender field classification", () => {
+  it("classifies gender radio buttons", { timeout: 60_000 }, async () => {
+    const { status, data } = await apiCall("/api/form/classify", "POST", {
+      fields: [
+        {
+          index: 0,
+          selector: "input[name='gender']",
+          label: "",
+          surroundingText: "性別 男性 女性 その他 無回答",
+          charLimit: null,
+          inputType: "radio",
+          currentValue: "",
+          options: [
+            { value: "male", text: "男性" },
+            { value: "female", text: "女性" },
+            { value: "other", text: "その他" },
+            { value: "no_answer", text: "無回答" },
+          ],
+        },
+      ],
+    });
+
+    expect(status).toBe(200);
+    expect(data.classifications[0].category).toBe("basic_info_gender");
+    expect(data.classifications[0].options).toHaveLength(4);
+  });
+
+  it("classifies birthday select fields", { timeout: 60_000 }, async () => {
+    const { status, data } = await apiCall("/api/form/classify", "POST", {
+      fields: [
+        {
+          index: 0,
+          selector: "#birth_year",
+          label: "",
+          surroundingText: "生年月日 年",
+          charLimit: null,
+          inputType: "select",
+          currentValue: "",
+          options: [
+            { value: "2000", text: "2000" },
+            { value: "2001", text: "2001" },
+            { value: "2002", text: "2002" },
+          ],
+        },
+        {
+          index: 1,
+          selector: "#birth_month",
+          label: "",
+          surroundingText: "月",
+          charLimit: null,
+          inputType: "select",
+          currentValue: "",
+          options: Array.from({ length: 12 }, (_, i) => ({
+            value: String(i + 1),
+            text: `${i + 1}`,
+          })),
+        },
+      ],
+    });
+
+    expect(status).toBe(200);
+    const categories = data.classifications.map((c: { category: string }) => c.category);
+    // Should classify as birthday-related
+    expect(
+      categories.some((c: string) => c.startsWith("basic_info_birthday"))
+    ).toBe(true);
+  });
 });
