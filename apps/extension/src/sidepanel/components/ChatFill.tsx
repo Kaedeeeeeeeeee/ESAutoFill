@@ -129,7 +129,7 @@ export function ChatFill() {
     setMessages([]);
     setAllFills([]);
     setIsFilled(false);
-    setPendingQuestion(null);
+    setPendingMissingFields(null);
 
     const fieldCount = (fields as Array<{ inputType: string }>).length;
     addMessage({

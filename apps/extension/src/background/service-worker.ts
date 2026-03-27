@@ -51,7 +51,11 @@ async function handleMessage(
           path: "sidepanel.html",
           enabled: true,
         });
-        await chrome.sidePanel.open({ tabId: tab.id });
+        try {
+          await chrome.sidePanel.open({ tabId: tab.id });
+        } catch {
+          // sidePanel.open() requires user gesture — may fail from message handler
+        }
       }
       return { success: true };
     }

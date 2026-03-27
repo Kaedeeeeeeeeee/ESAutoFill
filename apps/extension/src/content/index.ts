@@ -27,10 +27,17 @@ async function handleAutoFillClick() {
   // Highlight detected fields
   highlightFields(detectedFields.map((f) => f.selector));
 
-  // Open side panel
-  chrome.runtime.sendMessage({ type: "OPEN_SIDEPANEL", payload: null });
+  // Send fields to side panel (if open) via background
+  // Note: sidePanel.open() can't be called from message handlers,
+  // so we just send the data. User opens side panel via extension icon.
+  chrome.runtime.sendMessage({
+    type: "OPEN_SIDEPANEL",
+    payload: null,
+  }).catch(() => {
+    // Side panel API may fail if no user gesture — that's OK
+  });
 
-  // Small delay to let side panel open, then send fields
+  // Send fields after a short delay
   setTimeout(() => {
     chrome.runtime.sendMessage({
       type: "FIELDS_DETECTED",
